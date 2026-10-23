@@ -63,7 +63,7 @@ class AppModel @JvmOverloads constructor(application: Application, databaseName:
 
     fun execute(action: suspend () -> Unit) {
         viewModelScope.launch { try { action() } catch (e: CancellationException) { throw e }
-            catch (e: Exception) { message = e.message ?: "操作失败，请重试"; loaded = true; busy = false } }
+            catch (e: Exception) { AppLog.failure("operation_failed", e); message = e.message ?: "操作失败，请重试"; loaded = true; busy = false } }
     }
     fun notify(value: String) { message = value }
     fun font(value: Float) { fontSize = value.coerceIn(16f, 36f); preferences.edit().putFloat("fontSize", fontSize).apply() }
@@ -181,7 +181,13 @@ class AppModel @JvmOverloads constructor(application: Application, databaseName:
         draftJob?.cancel()
         val draft = currentDraft() ?: return
         val token = session
-        draftJob = viewModelScope.launch { delay(250); if (token == session) repository.draft(draft) }
+        draftJob = viewModelScope.launch {
+            delay(250)
+            if (token == session) {
+                repository.draft(draft)
+                AppLog.event("draft_saved", "mode=${draft.mode}")
+            } else AppLog.event("draft_skipped_stale_session")
+        }
     }
     fun background() {
         reveal.reset(); savePosition()
@@ -199,12 +205,14 @@ class AppModel @JvmOverloads constructor(application: Application, databaseName:
         val article = current.copy(title = title.trim(), body = snapshot.text, masks = snapshot.masks,
             updatedAt = System.currentTimeMillis(), readingOffset = readOffset.coerceIn(0, snapshot.text.length))
         busy = true; draftJob?.cancel(); session++
+        AppLog.event("save_started", "creating=$creating masks=${article.masks.size}")
         execute {
             repository.save(article)
             selected = article; savedArticle = article; mode = ScreenMode.READ; busy = false
             reveal.reset()
             preferences.edit().putString("lastArticle", article.id).apply()
             if (creating) edit(ScreenMode.MASK)
+            AppLog.event("save_completed", "creating=$creating masks=${article.masks.size}")
             notify(if (creating) "文章已保存，划过文字开始挖空" else "已保存")
         }
     }
@@ -235,6 +243,7 @@ class AppModel @JvmOverloads constructor(application: Application, databaseName:
         pendingComposition = null; mode = if (draft.mode == "MASK") ScreenMode.MASK else ScreenMode.BODY
         marking = true; historyVersion++; pendingRecovery = null
         page = AppPage.ARTICLE
+        AppLog.event("draft_restored", "mode=${draft.mode}")
     }
     fun discardRecovery(draft: Draft) { execute { repository.discardDraft(draft.articleId); pendingRecovery = null } }
 
@@ -289,7 +298,9 @@ class AppModel @JvmOverloads constructor(application: Application, databaseName:
             val value = withContext(Dispatchers.IO) { BackupCodec.read(input) }
             val name = "恢复 " + SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.CHINA).format(Date())
             val imported = BackupCodec.asNewCollection(value, name)
-            repository.importCollection(imported); notify("已恢复 ${value.articles.size} 篇文章，原资料未覆盖")
+            repository.importCollection(imported)
+            AppLog.event("backup_restored", "articles=${value.articles.size} folders=${value.folders.size}")
+            notify("已恢复 ${value.articles.size} 篇文章，原资料未覆盖")
         } finally { busy = false }
     }
 }

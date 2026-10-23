@@ -6,7 +6,7 @@
 - 当前版本：拾忆 1.2.1，`versionCode 5`，应用标识 `com.hh.recall`。
 - 最新功能：分类页等宽等高文件夹卡片、篇数置右、绿色竖向双点直接重命名、平板横竖屏和手机竖屏适配。
 - 正式版已同签名覆盖安装到小米平板 7。用户资料仍在：2 篇文章、2 个文件夹；覆盖前后完整数据库快照一致。
-- 工作区不是 Git 仓库；不要假设有可用的 Git 历史。
+- 工作区已初始化 Git；当前工程改进以提交 `c4dfe32` 为源代码基线，后续提交见 `git log`。更早的 1.2.0→1.2.1 历史无法恢复。
 
 ## 重要文件
 
@@ -34,9 +34,9 @@ $env:JAVA_HOME = 'D:\JDK'
 & 'C:\Users\hh\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -X utf8 scripts/run_device_tests.py
 ```
 
-1.2.1 最近结果：34 项单元测试通过；小米平板横屏 29 项设备测试通过；平板竖屏和 1080 × 2400 / 440 dpi 手机竖屏模拟各 7 项分类测试通过；Lint 0 错误、8 条已有警告。真实小米 14 Pro 未连接。截图和按设备区分的日志位于 `qa/`，汇总见 `VALIDATION.md`。
+1.2.1 原始验收结果见 `VALIDATION.md`。2026-10-23 工程改进后，JVM 单测 36 项通过；Debug、AndroidTest、Release 均可构建；Lint 0 错误、5 条建议。小米平板 Reader 6 项通过，Xiaomi 23116PN5BC 手机竖屏真机 30 项通过。手机设备回归后已卸载临时 App 和测试包；平板正式 Release 未改动。
 
-ADB 平板序列号：`b840bb56`。设备为小米平板 7，Android 16。手机竖屏测试是在平板上模拟尺寸，不是真机测试。测试脚本会通过 `adb install -r` 覆盖安装 Debug 版；不要卸载正式 App，也不要向个人数据库恢复备份或导入测试资料。
+ADB 平板序列号：`b840bb56`（小米平板 7，Android 16）；手机序列号可通过 `adb devices -l` 查询，脚本用环境变量 `RECALL_DEVICE_SERIAL` 指定。测试脚本通过 `adb install -r` 安装 Debug 版；测试完应恢复原正式版或卸载临时测试包，不要向个人数据库恢复备份或导入测试资料。手机是竖屏目标，不需要横屏验收。
 
 ## 后续开发注意事项
 
@@ -57,7 +57,8 @@ ADB 平板序列号：`b840bb56`。设备为小米平板 7，Android 16。手机
 - 本次 JVM 单测 36 项通过；Debug、AndroidTest、Release 构建和 Lint 通过。Lint 当前报告 0 错误、5 条警告，剩余为目标 API 与依赖更新建议；没有为清零而盲目升级。
 - 设备上最终恢复安装 `dist/拾忆-v1.2.1.apk`，系统报告 versionCode 5。未执行主资料导入、删除或恢复操作。当前改动尚未提升版本号，也未生成正式 Release 或新分发包。
 - 2026-10-23 已在 Xiaomi 23116PN5BC 手机竖屏真机运行完整 30 项设备回归，全部通过，最终代码日志为 `qa/v121-phone-real-tests.txt`。设备原先未安装 App；结束后卸载本轮安装的应用和测试包。测试脚本现支持 `RECALL_DEVICE_SERIAL` 并按设备序列号分别保存日志。
-- 仍待分阶段评估：AppModel 可独立测试的状态逻辑、MaskRules 大文本边界扫描、Repository 全量 reload、统一 Debug 日志、Lint 警告清理、手机竖屏真机验收和签名材料异地备份状态确认。手机目前未连接；平板尺寸模拟不替代真机验证。
+- 新增 `AppLog` 统一 Debug 日志：保存、草稿写入／恢复、备份导入、数据库迁移和异步操作失败均有事件；事件不写入文章正文或草稿内容。Release 不输出这些诊断日志。
+- 仍待评估：`AppModel` 状态转换的独立 JVM 测试设计；`MaskRules` 局部 Unicode 字素边界扫描优化（固定字符窗口可能切断任意长的组合字素）；`Repository.reload()` 与阅读位置状态双来源的一致性重构；剩余 5 条 Lint 建议（目标 API、依赖更新和 KTX）；签名材料异地备份状态。当前手机竖屏自动回归已完成，手动输入法候选、字体缩放及系统手势探索尚未完成。不要为清空 Lint 建议而无测试升级 target SDK 或依赖。
 
 ## 新窗口开场模板
 

@@ -3,6 +3,7 @@ package com.hh.recall.data
 import android.content.Context
 import androidx.room.Room
 import com.hh.recall.core.*
+import com.hh.recall.AppLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.sync.Mutex
@@ -39,6 +40,7 @@ class Repository(context: Context, databaseName: String = "recall.db") : java.io
             if (clearDraft) dao.deleteDraft(article.id)
         }
         reload()
+        AppLog.event("repository_save", "masks=${article.masks.size} clearDraft=$clearDraft")
     }
     suspend fun position(id: String, offset: Int) = serial {
         dao.savePosition(id, offset)
@@ -47,6 +49,7 @@ class Repository(context: Context, databaseName: String = "recall.db") : java.io
     suspend fun draft(draft: Draft) = serial {
         dao.saveDraft(DraftRow().apply { articleId = draft.articleId; json = JsonCodec.draft(draft) })
         drafts.value = dao.drafts().map { JsonCodec.readDraft(it.json) }
+        AppLog.event("repository_draft", "mode=${draft.mode}")
     }
     suspend fun discardDraft(id: String) = serial { dao.deleteDraft(id); reload() }
     suspend fun deleteArticle(id: String) = serial {
@@ -71,6 +74,7 @@ class Repository(context: Context, databaseName: String = "recall.db") : java.io
             value.folders.forEach { folder -> dao.saveFolder(toRow(folder)) }
             value.articles.forEach { dao.saveArticle(toRow(it)) }
         }; reload()
+        AppLog.event("repository_import", "articles=${value.articles.size} folders=${value.folders.size}")
     }
     suspend fun snapshot(): Library = serial { reload(); library.value }
 

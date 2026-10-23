@@ -29,6 +29,8 @@
 - JVM 单测 36 项全部通过。`assembleDebug`、`assembleDebugAndroidTest`、`assembleRelease`、`lintDebug` 成功；Lint 当前为 0 错误、5 条目标 API／依赖更新建议。`git diff --check` 通过。
 - 阅读器设备测试需要临时安装 Debug 及测试 APK，完成后已覆盖安装原 Release 1.2.1；设备系统报告 versionCode 5。测试没有调用个人资料导入／删除流程。
 - 2026-10-23 Xiaomi 23116PN5BC（Android 16，物理 1440 × 3200 / 560 dpi；本轮保留设备原有 1080 × 2400 / 420 dpi 覆盖设置）手机竖屏真机完整运行 30 项设备测试，全部通过，日志 `qa/v121-phone-real-tests.txt`。手机此前未安装应用，本轮完成后卸载了临时安装的主包和测试包；没有触碰平板上的正式 App。手机尚未做手动输入法、字体缩放和系统手势探索验收。
+- 加入 Debug-only 的统一事件日志，覆盖保存、草稿写入／恢复、备份导入、数据库迁移和异步操作失败，不记录用户正文或草稿内容。
+- 本次变更后再次通过全部 36 项 JVM 单测及完整 30 项手机竖屏真机设备回归；Debug、AndroidTest、Release 和 `lintDebug` 均构建成功。Lint 为 0 错误、5 条建议（目标 API、3 条依赖更新、KTX 用法）。测试完成后已卸载手机上的 Debug 主包和测试包；未触碰平板正式 App。
 
 ---
 
