@@ -71,9 +71,17 @@ class ReaderDeviceTest {
     @Test fun revealingDoesNotChangeGlyphPositionsOrLineBreaks() {
         val visible = mutableStateOf<Set<String>>(emptySet()); mount(ScreenMode.READ, visible)
         var before = emptyList<Float>()
-        compose.runOnIdle { before = (0..body.length).map { reader.textView.layout.getPrimaryHorizontal(it) }; visible.value = setOf("a") }
+        var layoutBefore: android.text.Layout? = null
+        compose.runOnIdle {
+            layoutBefore = reader.textView.layout
+            before = (0..body.length).map { reader.textView.layout.getPrimaryHorizontal(it) }
+            visible.value = setOf("a")
+        }
         compose.waitForIdle()
-        compose.runOnIdle { assertEquals(before, (0..body.length).map { reader.textView.layout.getPrimaryHorizontal(it) }) }
+        compose.runOnIdle {
+            assertSame(layoutBefore, reader.textView.layout)
+            assertEquals(before, (0..body.length).map { reader.textView.layout.getPrimaryHorizontal(it) })
+        }
     }
 
     @Test fun tappingHiddenMaskRoutesCorrectId() {

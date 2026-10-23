@@ -8,7 +8,8 @@ import android.graphics.Typeface
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.BackgroundColorSpan
-import android.text.style.ForegroundColorSpan
+import android.text.style.CharacterStyle
+import android.text.TextPaint
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ViewConfiguration
@@ -57,6 +58,16 @@ class ReaderView(context: Context) : ScrollView(context) {
 }
 
 class MaskTextView(context: Context) : TextView(context) {
+    private class MaskForegroundSpan(
+        var visible: Boolean,
+        var color: Int,
+        var hiddenColor: Int,
+    ) : CharacterStyle() {
+        override fun updateDrawState(textPaint: TextPaint) {
+            textPaint.color = if (visible) color else hiddenColor
+        }
+    }
+
     var onMark: (Int, Int) -> Unit = { _, _ -> }
     var onRemove: (Int) -> Unit = {}
     var onReveal: (String) -> Unit = {}
@@ -69,6 +80,7 @@ class MaskTextView(context: Context) : TextView(context) {
     private var accent = 0
     private var answer = 0
     private var marked = 0
+    private val maskSpans = mutableMapOf<String, MaskForegroundSpan>()
     private var boundFont = 0f
     private var downX = 0f
     private var downY = 0f
@@ -141,32 +153,44 @@ class MaskTextView(context: Context) : TextView(context) {
 
     fun bind(value: String, ranges: List<Mask>, visible: Set<String>, screen: ScreenMode,
              mark: Boolean, font: Float, color: Int, lineColor: Int, answerColor: Int, markColor: Int) {
-        val changed = body != value || masks != ranges || revealed != visible || mode != screen ||
+        val rebuildText = body != value || masks != ranges || mode != screen ||
             foreground != color || accent != lineColor || boundFont != font || answer != answerColor || marked != markColor
+        val revealChanged = revealed != visible
         body = value; masks = ranges; revealed = visible; mode = screen
         marking = screen == ScreenMode.MASK && mark
         foreground = color; accent = lineColor
         answer = answerColor; marked = markColor
-        if (changed) { boundFont = font; textSize = font; applySpans() }
+        if (rebuildText) {
+            boundFont = font; textSize = font; applySpans()
+        } else if (revealChanged) {
+            masks.forEach { maskSpans[it.id]?.visible = it.id in visible }
+            updateContentDescription()
+            invalidate()
+        }
     }
 
     private fun applySpans() {
         val spans = SpannableString(body)
+        maskSpans.clear()
         setTextColor(foreground)
         masks.forEach { mask ->
             if (mask.start >= 0 && mask.end <= body.length) {
-                val color = when {
-                    mode == ScreenMode.MASK -> marked
-                    mask.id in revealed -> answer
-                    else -> android.graphics.Color.TRANSPARENT
-                }
-                spans.setSpan(ForegroundColorSpan(color), mask.start, mask.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                val color = if (mode == ScreenMode.MASK) marked else answer
+                val maskSpan = MaskForegroundSpan(mode == ScreenMode.MASK || mask.id in revealed, color,
+                    if (mode == ScreenMode.MASK) color else android.graphics.Color.TRANSPARENT)
+                maskSpans[mask.id] = maskSpan
+                spans.setSpan(maskSpan, mask.start, mask.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             }
         }
         preview?.let { (start, end) ->
             if (start < end) spans.setSpan(BackgroundColorSpan(0x35BC4B48), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
         text = spans
+        updateContentDescription()
+        invalidate()
+    }
+
+    private fun updateContentDescription() {
         contentDescription = if (mode != ScreenMode.READ) body else buildString {
             var previous = 0
             masks.forEach { mask ->
@@ -176,7 +200,6 @@ class MaskTextView(context: Context) : TextView(context) {
             }
             append(body.substring(previous))
         }
-        invalidate()
     }
 
     override fun onDraw(canvas: Canvas) {
