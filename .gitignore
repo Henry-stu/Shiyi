@@ -1,0 +1,14 @@
+.gradle/
+.kotlin/
+**/build/
+local.properties
+signing/
+.idea/
+*.iml
+captures/
+
+# Local QA data and release artifacts
+qa/
+dist/
+__pycache__/
+*.pyc
