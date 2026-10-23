@@ -30,7 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.sp
 import com.hh.recall.AppModel
 import com.hh.recall.core.*
@@ -43,7 +43,7 @@ fun CategoryScreen(vm: AppModel, articles: List<Article>, folders: List<Folder>,
     val visible = entries.filter { it.name.contains(vm.categoryQuery, ignoreCase = true) }
     Box(Modifier.fillMaxSize().testTag("categoryPage"), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.widthIn(max = 1120.dp).fillMaxSize().padding(horizontal = 20.dp)) {
-            val compact = LocalConfiguration.current.screenHeightDp < 480
+            val compact = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() } < 480.dp
             if (vm.categorySearching && !compact) {
                 CategorySearchField(vm, Modifier.fillMaxWidth().padding(top = 12.dp))
             }

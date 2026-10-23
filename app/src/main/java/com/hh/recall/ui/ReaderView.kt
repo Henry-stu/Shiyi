@@ -15,6 +15,8 @@ import android.view.MotionEvent
 import android.view.ViewConfiguration
 import android.widget.ScrollView
 import android.widget.TextView
+import android.annotation.SuppressLint
+import androidx.core.graphics.withClip
 import com.hh.recall.ScreenMode
 import com.hh.recall.core.Mask
 import com.hh.recall.core.MaskRules
@@ -207,18 +209,19 @@ class MaskTextView(context: Context) : TextView(context) {
         if (mode != ScreenMode.READ) return
         val textLayout = layout ?: return
         canvas.save(); canvas.translate(totalPaddingLeft.toFloat(), totalPaddingTop.toFloat())
-        linePaint.color = accent
-        val thickness = 1.4f * resources.displayMetrics.density
-        masks.filterNot { it.id in revealed }.forEach { mask ->
-            selectionPath.reset(); textLayout.getSelectionPath(mask.start, mask.end, selectionPath)
-            val firstLine = textLayout.getLineForOffset(mask.start)
-            val lastLine = textLayout.getLineForOffset((mask.end - 1).coerceAtLeast(mask.start))
-            for (line in firstLine..lastLine) {
-                val y = textLayout.getLineBaseline(line) + 2 * resources.displayMetrics.density
-                canvas.save(); canvas.clipRect(0f, y, width.toFloat(), y + thickness)
-                canvas.drawPath(selectionPath, linePaint); canvas.restore()
+            linePaint.color = accent
+            val thickness = 1.4f * resources.displayMetrics.density
+            masks.filterNot { it.id in revealed }.forEach { mask ->
+                selectionPath.reset(); textLayout.getSelectionPath(mask.start, mask.end, selectionPath)
+                val firstLine = textLayout.getLineForOffset(mask.start)
+                val lastLine = textLayout.getLineForOffset((mask.end - 1).coerceAtLeast(mask.start))
+                for (line in firstLine..lastLine) {
+                    val y = textLayout.getLineBaseline(line) + 2 * resources.displayMetrics.density
+                    canvas.withClip(0f, y, width.toFloat(), y + thickness) {
+                        canvas.drawPath(selectionPath, linePaint)
+                    }
+                }
             }
-        }
         canvas.restore()
     }
 
@@ -250,6 +253,7 @@ class MaskTextView(context: Context) : TextView(context) {
         applySpans()
     }
 
+    @SuppressLint("ClickableViewAccessibility") // GestureDetector routes confirmed clicks through performClick().
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (mode == ScreenMode.MASK && !marking) return false
         if (event.actionMasked == MotionEvent.ACTION_DOWN) multiTouchCancelled = false

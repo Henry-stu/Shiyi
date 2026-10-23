@@ -26,9 +26,9 @@
 - ZIP 恢复改为仅为新集合创建恢复根目录，导入文件夹保留原名；重复恢复不再累积名称前缀。新增单测覆盖连续两次恢复。
 - 拖动区域交叠时采用最小相交区域作为目标；新增单测覆盖宽目标与嵌套目标。
 - 背诵答案显隐只更新颜色 Span、无障碍描述和绘制失效，不调用 `setText`。设备回归确认显隐前后仍复用同一文本 Layout 实例，字符横坐标不变。
-- JVM 单测 36 项全部通过。`assembleDebug`、`assembleDebugAndroidTest`、`lintDebug` 成功；Lint 当前为 0 错误、10 条警告。`git diff --check` 通过。
+- JVM 单测 36 项全部通过。`assembleDebug`、`assembleDebugAndroidTest`、`assembleRelease`、`lintDebug` 成功；Lint 当前为 0 错误、5 条目标 API／依赖更新建议。`git diff --check` 通过。
 - 阅读器设备测试需要临时安装 Debug 及测试 APK，完成后已覆盖安装原 Release 1.2.1；设备系统报告 versionCode 5。测试没有调用个人资料导入／删除流程。
-- 手机真机尚未连接，未完成目标手机输入法、导航手势和字体缩放验收。其他问题仍按 HANDOFF 中“进行中”列表跟进。
+- 2026-10-23 Xiaomi 23116PN5BC（Android 16，物理 1440 × 3200 / 560 dpi；本轮保留设备原有 1080 × 2400 / 420 dpi 覆盖设置）手机竖屏真机完整运行 30 项设备测试，全部通过，日志 `qa/v121-phone-real-tests.txt`。手机此前未安装应用，本轮完成后卸载了临时安装的主包和测试包；没有触碰平板上的正式 App。手机尚未做手动输入法、字体缩放和系统手势探索验收。
 
 ---
 

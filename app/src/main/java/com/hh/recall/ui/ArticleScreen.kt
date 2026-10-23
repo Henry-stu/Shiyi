@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -156,7 +157,7 @@ private fun ToolIcon(icon: ImageVector, label: String, tag: String, enabled: Boo
 private fun MarkBrowseSwitch(vm: AppModel) {
     val fraction by animateFloatAsState(if (vm.marking) 0f else 1f, tween(180), label = "markBrowse")
     Box(Modifier.width(188.dp).height(48.dp).clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainer)) {
-        Box(Modifier.offset(x = 94.dp * fraction).padding(3.dp).width(94.dp).fillMaxHeight().clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.primaryContainer))
+        Box(Modifier.offset { IntOffset((94.dp * fraction).roundToPx(), 0) }.padding(3.dp).width(94.dp).fillMaxHeight().clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.primaryContainer))
         Row {
             TextButton(onClick = { vm.marking = true }, enabled = !vm.busy, modifier = Modifier.width(94.dp).fillMaxHeight().testTag("markMode")) { Text("标记", color = MaterialTheme.colorScheme.onSurface) }
             TextButton(onClick = { vm.marking = false }, enabled = !vm.busy, modifier = Modifier.width(94.dp).fillMaxHeight().testTag("browseMode")) { Text("浏览", color = MaterialTheme.colorScheme.onSurface) }

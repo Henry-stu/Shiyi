@@ -1,11 +1,12 @@
 """Local QA helper: ADB operations on this project's authorized test device."""
 import json
+import os
 import pathlib
 import subprocess
 import xml.etree.ElementTree as ET
 
 ADB = r"C:\Users\hh\AppData\Local\Android\Sdk\platform-tools\adb.exe"
-SERIAL = "b840bb56"
+SERIAL = os.environ.get("RECALL_DEVICE_SERIAL", "b840bb56")
 OUT = pathlib.Path(__file__).resolve().parents[1] / "qa"
 OUT.mkdir(exist_ok=True)
 

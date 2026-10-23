@@ -17,7 +17,7 @@ def blocked_launch():
     lines=[s for s in logs.splitlines() if 'cmp=com.hh.recall/androidx.activity.ComponentActivity' in s and 'result code=102' in s]
     return lines[-1] if lines else ''
 last_block=blocked_launch()
-log_path=OUT/'device-tests.txt'
+log_path=OUT/('device-tests-'+SERIAL+'.txt')
 with log_path.open('w',encoding='utf-8') as log:
     args=[ADB,'-s',SERIAL,'shell','am','instrument','-w','-r']
     if len(sys.argv)>1: args += ['-e','class',sys.argv[1]]

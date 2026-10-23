@@ -19,8 +19,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -95,7 +95,7 @@ fun RecallApp(vm: AppModel) {
         val articlePage = vm.page == AppPage.ARTICLE
         val categoryPage = vm.page == AppPage.CATEGORIES
         val folderPage = vm.page == AppPage.FOLDER
-        val compactHeight = LocalConfiguration.current.screenHeightDp < 480
+        val compactHeight = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() } < 480.dp
         val compactKeyboard = compactHeight && WindowInsets.ime.getBottom(LocalDensity.current) > 0
         Scaffold(
             modifier = Modifier.imePadding(), containerColor = MaterialTheme.colorScheme.background,
