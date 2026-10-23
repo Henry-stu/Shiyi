@@ -22,6 +22,12 @@ class BackupCodecTest {
         assertTrue(imported.folders.any { it.id == imported.articles[0].folderId })
         assertEquals(source.articles[0].body, imported.articles[0].body)
     }
+    @Test fun restoringAnAlreadyRestoredCollectionDoesNotGrowFolderNames() {
+        val first = BackupCodec.asNewCollection(source, "恢复 2026-10-23")
+        val second = BackupCodec.asNewCollection(first, "恢复 2026-10-24")
+        assertEquals("文件夹", second.folders.last().name)
+        assertEquals("恢复 2026-10-24", second.folders.first().name)
+    }
     @Test fun invalidRangeIsRejectedBeforeImport() {
         val invalid = source.copy(articles = source.articles.map { it.copy(masks = listOf(Mask(2, 3))) })
         assertThrows(Exception::class.java) { BackupCodec.read(ByteArrayInputStream(bytes(invalid))) }

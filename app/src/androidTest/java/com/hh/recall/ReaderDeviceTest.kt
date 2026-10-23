@@ -25,6 +25,7 @@ class ReaderDeviceTest {
     private var maskCallback: Pair<Int, Int>? = null
     private var removed = -1
     private var revealed: String? = null
+    private var revealCount = 0
     private val body = "手动挖空保持文字排版。\n第二行可以跨行选择，English 😀。"
 
     private fun mount(mode: ScreenMode, visible: State<Set<String>> = mutableStateOf(emptySet()), content: String = body) {
@@ -35,7 +36,7 @@ class ReaderDeviceTest {
                         reader = it
                         it.textView.onMark = { start, end -> maskCallback = start to end }
                         it.textView.onRemove = { removed = it }
-                        it.textView.onReveal = { revealed = it }
+                        it.textView.onReveal = { revealed = it; revealCount++ }
                     } }, update = { it.bind(content, listOf(Mask(0, 4, "a")), visible.value, mode, true, 24f, 0xFF222222.toInt(), 0xFFFFFFFF.toInt(), 0xFF246B5B.toInt()) }, modifier = Modifier.fillMaxSize())
                 }
             }
@@ -77,7 +78,24 @@ class ReaderDeviceTest {
 
     @Test fun tappingHiddenMaskRoutesCorrectId() {
         mount(ScreenMode.READ); tap(1)
+        Thread.sleep(ViewConfigurationTimeout)
+        compose.waitForIdle()
         compose.runOnIdle { assertEquals("a", revealed) }
+    }
+
+    private companion object { const val ViewConfigurationTimeout = 400L }
+
+    @Test fun doubleTapRevealsMaskOnlyOnce() {
+        mount(ScreenMode.READ)
+        compose.runOnIdle {
+            val time = SystemClock.uptimeMillis(); val p = point(1)
+            dispatch(MotionEvent.ACTION_DOWN, p, time, time)
+            dispatch(MotionEvent.ACTION_UP, p, time, time + 25)
+            dispatch(MotionEvent.ACTION_DOWN, p, time + 100, time + 100)
+            dispatch(MotionEvent.ACTION_UP, p, time + 100, time + 125)
+        }
+        compose.waitForIdle()
+        compose.runOnIdle { assertEquals("a", revealed); assertEquals(1, revealCount) }
     }
 
     @Test fun directDragSelectsAcrossParagraphWithoutLongPress() {

@@ -107,14 +107,13 @@ class MaskTextView(context: Context) : TextView(context) {
     private val gestures = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onDown(event: MotionEvent) = true
         override fun onSingleTapUp(event: MotionEvent): Boolean {
-            if (mode == ScreenMode.READ) {
-                clickOffset = offsetAt(event.x, event.y, true)
-                performClick()
-            }
             return true
         }
         override fun onSingleTapConfirmed(event: MotionEvent): Boolean {
-            if (marking && !dragging) {
+            if (mode == ScreenMode.READ) {
+                clickOffset = offsetAt(event.x, event.y, true)
+                performClick()
+            } else if (marking && !dragging) {
                 val at = offsetAt(event.x, event.y, true)
                 if (at >= 0 && masks.none { at in it.start until it.end }) onMark(at, nextCharacter(at))
             }

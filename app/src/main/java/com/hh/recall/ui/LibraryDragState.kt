@@ -17,7 +17,11 @@ internal class LibraryDragState {
 
     val target: String?
         get() = if (article == null || !folderBar.contains(pointer)) null else
-            targets.entries.firstOrNull { (_, bounds) -> bounds.intersect(folderBar).contains(pointer) }?.key
+            targets.entries.asSequence()
+                .filter { (_, bounds) -> bounds.intersect(folderBar).contains(pointer) }
+                // Prefer the most specific target if animated/layout bounds briefly overlap.
+                .minByOrNull { (_, bounds) -> bounds.intersect(folderBar).let { it.width * it.height } }
+                ?.key
 
     fun start(value: Article, position: Offset) { article = value; pointer = position }
     fun move(delta: Offset) { if (article != null) pointer += delta }

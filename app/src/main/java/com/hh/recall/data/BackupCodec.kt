@@ -112,7 +112,8 @@ object BackupCodec {
             library.articles.map { it.copy(id = UUID.randomUUID().toString(),
                 folderId = it.folderId?.let(folderMap::get) ?: root.id,
                 masks = it.masks.map { mask -> mask.copy(id = UUID.randomUUID().toString()) }, updatedAt = System.currentTimeMillis()) },
-            listOf(root) + library.folders.map { it.copy(id = folderMap.getValue(it.id), name = "$name / ${it.name}".take(200)) },
+            // Keep imported folder names stable; prefixing on every restore compounds over time.
+            listOf(root) + library.folders.map { it.copy(id = folderMap.getValue(it.id)) },
         )
     }
 }
