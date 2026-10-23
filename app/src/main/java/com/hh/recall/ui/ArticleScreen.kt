@@ -30,6 +30,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,9 +44,18 @@ import com.hh.recall.ScreenMode
 import kotlinx.coroutines.delay
 
 @Composable
-fun ArticleScreen(vm: AppModel, visible: Set<String>, onSave: () -> Unit) {
+fun ArticleScreen(vm: AppModel, visible: Set<String>, titleFocusRequest: Int = 0) {
     val article = vm.selected ?: return
+    val titleFocusRequester = remember(article.id) { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    LaunchedEffect(titleFocusRequest) {
+        if (titleFocusRequest > 0 && vm.mode == ScreenMode.BODY) {
+            titleFocusRequester.requestFocus()
+            keyboard?.show()
+        }
+    }
     var expanded by rememberSaveable(article.id) { mutableStateOf(false) }
+    var temporaryBrowse by remember(article.id) { mutableStateOf(false) }
     var hint by remember { mutableStateOf<String?>(null) }
     var hintVersion by remember { mutableIntStateOf(0) }
     fun feedback(text: String) { hint = text; hintVersion++ }
@@ -50,7 +64,7 @@ fun ArticleScreen(vm: AppModel, visible: Set<String>, onSave: () -> Unit) {
     Column(Modifier.fillMaxSize().padding(start = 16.dp, end = 12.dp).testTag("articlePage")) {
         if (vm.mode == ScreenMode.BODY) {
             OutlinedTextField(value = vm.title, onValueChange = vm::changeTitle, label = { Text("文章标题") },
-                singleLine = true, enabled = !vm.busy, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 12.dp).testTag("title"))
+                singleLine = true, enabled = !vm.busy, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 12.dp).focusRequester(titleFocusRequester).testTag("title"))
         }
         Box(Modifier.weight(1f).fillMaxWidth()) {
             Row(Modifier.fillMaxSize()) {
@@ -66,8 +80,9 @@ fun ArticleScreen(vm: AppModel, visible: Set<String>, onSave: () -> Unit) {
                         key(article.id, vm.mode) {
                             AndroidView(factory = { ReaderView(it).apply {
                                 initialOffset = vm.readingStart(); onReading = vm::reading
+                                onTemporaryBrowseChanged = { temporaryBrowse = it }
                                 textView.onMark = vm::mark; textView.onRemove = vm::unmark; textView.onReveal = vm.reveal::toggle
-                            } }, update = { it.bind(vm.snapshot.text, vm.snapshot.masks, visible, vm.mode, vm.marking, vm.fontSize,
+                            } }, update = { it.bind(vm.snapshot.text, vm.snapshot.masks, visible, vm.mode, vm.marking && !temporaryBrowse, vm.fontSize,
                                 colors.onSurface.toArgb(), colors.surface.toArgb(), colors.onSurfaceVariant.toArgb(), answerColor(vm.dark).toArgb(), markingColor(vm.dark).toArgb()) },
                                 modifier = Modifier.fillMaxSize().testTag("reader"))
                         }
@@ -108,14 +123,12 @@ fun ArticleScreen(vm: AppModel, visible: Set<String>, onSave: () -> Unit) {
         if (vm.mode != ScreenMode.READ) {
             Row(Modifier.fillMaxWidth().padding(top = 8.dp).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
                 if (vm.mode == ScreenMode.MASK) {
-                    MarkBrowseSwitch(vm)
+                    MarkBrowseSwitch(vm, temporaryBrowse)
                     Spacer(Modifier.width(8.dp))
                 }
                 val version = vm.historyVersion
                 IconButton(onClick = vm::undo, enabled = vm.canUndo && !vm.busy, modifier = Modifier.testTag("undo-$version")) { Icon(Icons.AutoMirrored.Outlined.Undo, "撤销") }
                 IconButton(onClick = vm::redo, enabled = vm.canRedo && !vm.busy) { Icon(Icons.AutoMirrored.Outlined.Redo, "重做") }
-                Spacer(Modifier.width(8.dp))
-                TextButton(onClick = onSave, enabled = !vm.busy) { Icon(Icons.Outlined.Check, null, Modifier.size(17.dp)); Spacer(Modifier.width(4.dp)); Text(if (vm.mode == ScreenMode.MASK) "完成" else "保存") }
             }
         }
         Text(when (vm.mode) {
@@ -154,13 +167,14 @@ private fun ToolIcon(icon: ImageVector, label: String, tag: String, enabled: Boo
 }
 
 @Composable
-private fun MarkBrowseSwitch(vm: AppModel) {
-    val fraction by animateFloatAsState(if (vm.marking) 0f else 1f, tween(180), label = "markBrowse")
+private fun MarkBrowseSwitch(vm: AppModel, temporaryBrowse: Boolean) {
+    val isMarking = vm.marking && !temporaryBrowse
+    val fraction by animateFloatAsState(if (isMarking) 0f else 1f, tween(180), label = "markBrowse")
     Box(Modifier.width(188.dp).height(48.dp).clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.surfaceContainer)) {
         Box(Modifier.offset { IntOffset((94.dp * fraction).roundToPx(), 0) }.padding(3.dp).width(94.dp).fillMaxHeight().clip(RoundedCornerShape(24.dp)).background(MaterialTheme.colorScheme.primaryContainer))
         Row {
-            TextButton(onClick = { vm.marking = true }, enabled = !vm.busy, modifier = Modifier.width(94.dp).fillMaxHeight().testTag("markMode")) { Text("标记", color = MaterialTheme.colorScheme.onSurface) }
-            TextButton(onClick = { vm.marking = false }, enabled = !vm.busy, modifier = Modifier.width(94.dp).fillMaxHeight().testTag("browseMode")) { Text("浏览", color = MaterialTheme.colorScheme.onSurface) }
+            TextButton(onClick = { vm.marking = true }, enabled = !vm.busy, modifier = Modifier.width(94.dp).fillMaxHeight().testTag("markMode").semantics { selected = isMarking }) { Text("标记", color = MaterialTheme.colorScheme.onSurface) }
+            TextButton(onClick = { vm.marking = false }, enabled = !vm.busy, modifier = Modifier.width(94.dp).fillMaxHeight().testTag("browseMode").semantics { selected = !isMarking }) { Text("浏览", color = MaterialTheme.colorScheme.onSurface) }
         }
     }
 }

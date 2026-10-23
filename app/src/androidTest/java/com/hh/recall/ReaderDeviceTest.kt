@@ -26,6 +26,7 @@ class ReaderDeviceTest {
     private var removed = -1
     private var revealed: String? = null
     private var revealCount = 0
+    private val temporaryBrowseStates = mutableListOf<Boolean>()
     private val body = "手动挖空保持文字排版。\n第二行可以跨行选择，English 😀。"
 
     private fun mount(mode: ScreenMode, visible: State<Set<String>> = mutableStateOf(emptySet()), content: String = body) {
@@ -37,6 +38,7 @@ class ReaderDeviceTest {
                         it.textView.onMark = { start, end -> maskCallback = start to end }
                         it.textView.onRemove = { removed = it }
                         it.textView.onReveal = { revealed = it; revealCount++ }
+                        it.onTemporaryBrowseChanged = { temporaryBrowseStates += it }
                     } }, update = { it.bind(content, listOf(Mask(0, 4, "a")), visible.value, mode, true, 24f, 0xFF222222.toInt(), 0xFFFFFFFF.toInt(), 0xFF246B5B.toInt()) }, modifier = Modifier.fillMaxSize())
                 }
             }
@@ -59,6 +61,13 @@ class ReaderDeviceTest {
         val event = MotionEvent.obtain(start, at, action, point.first + location[0], point.second + location[1], 0)
         event.offsetLocation(-location[0].toFloat(), -location[1].toFloat())
         reader.textView.dispatchTouchEvent(event); event.recycle()
+    }
+
+    private fun dispatchReader(action: Int, x: Float, y: Float, start: Long, at: Long) {
+        val location = IntArray(2); reader.getLocationOnScreen(location)
+        val event = MotionEvent.obtain(start, at, action, x + location[0], y + location[1], 0)
+        event.offsetLocation(-location[0].toFloat(), -location[1].toFloat())
+        reader.dispatchTouchEvent(event); event.recycle()
     }
 
     private fun tap(offset: Int) {
@@ -143,5 +152,23 @@ class ReaderDeviceTest {
             assertNotNull(maskCallback)
         }
         compose.waitForIdle()
+    }
+
+    @Test fun verticalDragFromBlankPaddingTemporarilyEnablesBrowseWithoutMarking() {
+        mount(ScreenMode.MASK, content = (body + "\n\n").repeat(60))
+        val time = SystemClock.uptimeMillis()
+        compose.runOnIdle {
+            temporaryBrowseStates.clear()
+            dispatchReader(MotionEvent.ACTION_DOWN, 8f, 100f, time, time)
+            dispatchReader(MotionEvent.ACTION_MOVE, 9f, 170f, time, time + 60)
+            dispatchReader(MotionEvent.ACTION_UP, 9f, 170f, time, time + 90)
+        }
+        compose.waitForIdle()
+        compose.runOnIdle {
+            assertEquals(listOf(true, false), temporaryBrowseStates)
+            assertNull(maskCallback)
+            assertTrue("blank drag should scroll", reader.scrollY > 0)
+            assertTrue(reader.textView.marking)
+        }
     }
 }

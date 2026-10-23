@@ -26,9 +26,16 @@ import kotlin.math.abs
 class ReaderView(context: Context) : ScrollView(context) {
     val textView = MaskTextView(context)
     var onReading: (Int) -> Unit = {}
+    var onTemporaryBrowseChanged: (Boolean) -> Unit = {}
     var initialOffset = 0
     private var bound = false
     private var lastFont = 0f
+    private var blankScrollCandidate = false
+    private var blankScrollActive = false
+    private var downX = 0f
+    private var downY = 0f
+    private var lastBlankY = 0f
+    private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     init {
         isFillViewport = true
         clipToPadding = false
@@ -37,8 +44,67 @@ class ReaderView(context: Context) : ScrollView(context) {
             textView.layout?.let { layout -> onReading(layout.getLineStart(layout.getLineForVertical((scrollY - textView.totalPaddingTop).coerceAtLeast(0)))) }
         }
     }
-    override fun onInterceptTouchEvent(event: MotionEvent): Boolean =
-        if (textView.marking) false else super.onInterceptTouchEvent(event)
+    override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
+        val parentWantsIntercept = super.onInterceptTouchEvent(event)
+        if (!textView.marking) return parentWantsIntercept
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                downX = event.x; downY = event.y
+                lastBlankY = event.y
+                blankScrollCandidate = !textView.isTextHit(
+                    event.x - textView.left,
+                    event.y - textView.top + scrollY,
+                )
+                blankScrollActive = false
+                textView.blankScrollCandidate = blankScrollCandidate
+                if (blankScrollCandidate) requestDisallowInterceptTouchEvent(false)
+                else requestDisallowInterceptTouchEvent(true)
+            }
+            MotionEvent.ACTION_MOVE -> if (blankScrollCandidate && !blankScrollActive &&
+                kotlin.math.abs(event.y - downY) > touchSlop && kotlin.math.abs(event.y - downY) > kotlin.math.abs(event.x - downX)) {
+                blankScrollActive = true
+                onTemporaryBrowseChanged(true)
+                requestDisallowInterceptTouchEvent(false)
+                scrollBy(0, (event.y - lastBlankY).toInt())
+                lastBlankY = event.y
+            } else if (blankScrollCandidate && blankScrollActive) {
+                scrollBy(0, (event.y - lastBlankY).toInt())
+                lastBlankY = event.y
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> if (!blankScrollActive) clearBlankScroll()
+        }
+        val intercept = parentWantsIntercept && (blankScrollActive || !textView.marking)
+        if (intercept) textView.cancelStroke()
+        return intercept
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        val handled = super.onTouchEvent(event)
+        if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL) clearBlankScroll()
+        return handled
+    }
+
+    internal fun clearBlankScroll() {
+        textView.blankScrollCandidate = false
+        blankScrollCandidate = false
+        if (blankScrollActive) onTemporaryBrowseChanged(false)
+        blankScrollActive = false
+        requestDisallowInterceptTouchEvent(false)
+    }
+
+    internal fun beginBlankScroll() {
+        if (!blankScrollActive) {
+            blankScrollActive = true
+            onTemporaryBrowseChanged(true)
+            requestDisallowInterceptTouchEvent(false)
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+        if (blankScrollActive) onTemporaryBrowseChanged(false)
+        blankScrollActive = false
+        super.onDetachedFromWindow()
+    }
 
     fun bind(body: String, masks: List<Mask>, revealed: Set<String>, mode: ScreenMode, marking: Boolean,
              font: Float, foreground: Int, surface: Int, accent: Int,
@@ -74,6 +140,7 @@ class MaskTextView(context: Context) : TextView(context) {
     var onRemove: (Int) -> Unit = {}
     var onReveal: (String) -> Unit = {}
     var marking = false; private set
+    internal var blankScrollCandidate = false
     private var mode = ScreenMode.READ
     private var body = ""
     private var masks: List<Mask> = emptyList()
@@ -86,6 +153,7 @@ class MaskTextView(context: Context) : TextView(context) {
     private var boundFont = 0f
     private var downX = 0f
     private var downY = 0f
+    private var lastBlankY = 0f
     private var rawX = 0f
     private var rawY = 0f
     private var anchor = -1
@@ -246,6 +314,21 @@ class MaskTextView(context: Context) : TextView(context) {
         return MaskRules.boundary(body, at, false)
     }
 
+    internal fun isTextHit(x: Float, y: Float): Boolean {
+        val textLayout = layout ?: return false
+        if (body.isEmpty()) return false
+        val localY = y - totalPaddingTop
+        if (localY < 0 || localY > textLayout.height) return false
+        val line = textLayout.getLineForVertical(localY.toInt())
+        val localX = x - totalPaddingLeft
+        if (localX < textLayout.getLineLeft(line) || localX > textLayout.getLineRight(line)) return false
+        val at = textLayout.getOffsetForHorizontal(line, localX).coerceIn(0, body.lastIndex)
+        if (body[at].isWhitespace()) return false
+        val left = minOf(textLayout.getPrimaryHorizontal(at), textLayout.getPrimaryHorizontal(at + 1))
+        val right = maxOf(textLayout.getPrimaryHorizontal(at), textLayout.getPrimaryHorizontal(at + 1))
+        return localX in left..right
+    }
+
     private fun updatePreview(offset: Int) {
         if (anchor < 0 || offset < 0) return
         focusOffset = offset
@@ -268,29 +351,43 @@ class MaskTextView(context: Context) : TextView(context) {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 downX = event.x; downY = event.y; dragging = false
-                anchor = offsetAt(event.x, event.y, true)
-                if (marking) parent.requestDisallowInterceptTouchEvent(true)
+                lastBlankY = event.y
+                anchor = if (blankScrollCandidate) -1 else offsetAt(event.x, event.y, true)
+                if (marking && !blankScrollCandidate) parent.requestDisallowInterceptTouchEvent(true)
             }
-            MotionEvent.ACTION_MOVE -> if (marking && anchor >= 0) {
+            MotionEvent.ACTION_MOVE -> if (blankScrollCandidate) {
+                val dy = event.y - lastBlankY
+                if (abs(event.y - downY) > slop && abs(event.y - downY) > abs(event.x - downX)) {
+                    (parent as? ReaderView)?.beginBlankScroll()
+                    (parent as? ReaderView)?.scrollBy(0, dy.toInt())
+                }
+                lastBlankY = event.y
+            } else if (marking && anchor >= 0) {
                 if (!dragging && (abs(event.x - downX) > slop || abs(event.y - downY) > slop)) {
                     dragging = true; post(tick)
                 }
                 if (dragging) updatePreview(offsetAt(event.x, event.y, false))
             }
-            MotionEvent.ACTION_UP -> if (dragging) {
-                preview?.let { onMark(it.first, it.second) }
-                cancelStroke()
-                val cancel = MotionEvent.obtain(event).apply { action = MotionEvent.ACTION_CANCEL }
-                gestures.onTouchEvent(cancel); cancel.recycle()
-                return true
+            MotionEvent.ACTION_UP -> {
+                if (blankScrollCandidate) (parent as? ReaderView)?.clearBlankScroll()
+                if (dragging) {
+                    preview?.let { onMark(it.first, it.second) }
+                    cancelStroke()
+                    val cancel = MotionEvent.obtain(event).apply { action = MotionEvent.ACTION_CANCEL }
+                    gestures.onTouchEvent(cancel); cancel.recycle()
+                    return true
+                }
             }
-            MotionEvent.ACTION_CANCEL -> { cancelStroke(); gestures.onTouchEvent(event); return true }
+            MotionEvent.ACTION_CANCEL -> {
+                if (blankScrollCandidate) (parent as? ReaderView)?.clearBlankScroll()
+                cancelStroke(); gestures.onTouchEvent(event); return true
+            }
         }
         gestures.onTouchEvent(event)
         return true
     }
 
-    private fun cancelStroke() { removeCallbacks(tick); dragging = false; anchor = -1; preview = null; applySpans(); parent?.requestDisallowInterceptTouchEvent(false) }
+    internal fun cancelStroke() { removeCallbacks(tick); dragging = false; anchor = -1; preview = null; applySpans(); parent?.requestDisallowInterceptTouchEvent(false) }
     override fun onDetachedFromWindow() {
         removeCallbacks(tick)
         val cancel = MotionEvent.obtain(0, 0, MotionEvent.ACTION_CANCEL, 0f, 0f, 0)

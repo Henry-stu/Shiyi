@@ -22,6 +22,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -60,6 +62,10 @@ fun RecallApp(vm: AppModel) {
         }
         var settings by remember { mutableStateOf(false) }
         var mainMenu by remember { mutableStateOf(false) }
+        var importMenu by remember { mutableStateOf(false) }
+        var pendingImportLabel by remember { mutableStateOf("") }
+        var titleRequired by remember { mutableStateOf(false) }
+        var titleFocusRequest by remember { mutableIntStateOf(0) }
         var leaveDialog by remember { mutableStateOf(false) }
         var impactDialog by remember { mutableStateOf(false) }
         var rename by remember { mutableStateOf<Article?>(null) }
@@ -77,9 +83,13 @@ fun RecallApp(vm: AppModel) {
             if (uri != null) vm.execute { val input = context.contentResolver.openInputStream(uri) ?: error("无法读取备份文件")
                 input.use { vm.restore(it) } }
         }
+        val importPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) vm.notify("已选择$pendingImportLabel 文件，解析导入将在后续版本开放")
+        }
         fun finishEdit() {
             vm.finishComposition()
-            if (vm.mode == ScreenMode.BODY && vm.affectedCount > 0) impactDialog = true else vm.save()
+            if (vm.title.isBlank()) titleRequired = true
+            else if (vm.mode == ScreenMode.BODY && vm.affectedCount > 0) impactDialog = true else vm.save()
         }
         fun back() {
             if (vm.busy) return
@@ -128,6 +138,21 @@ fun RecallApp(vm: AppModel) {
                                 Text(if (vm.mode == ScreenMode.BODY) "保存" else "完成")
                             }
                         } else {
+                            if (home) Box {
+                                IconButton(onClick = { importMenu = true }, enabled = !vm.busy,
+                                    modifier = Modifier.testTag("importButton").semantics { contentDescription = "导入文件" }) {
+                                    Icon(Icons.Outlined.Add, "导入文件")
+                                }
+                                DropdownMenu(importMenu, { importMenu = false }, shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp)) {
+                                    DropdownMenuItem(text = { Text("Markdown 文件") }, leadingIcon = { Icon(Icons.Outlined.Description, null) },
+                                        onClick = {
+                                            importMenu = false; pendingImportLabel = "Markdown"
+                                            importPicker.launch(arrayOf("text/markdown", "text/plain", "application/octet-stream"))
+                                        })
+                                    DropdownMenuItem(text = { Text("PDF 文件") }, leadingIcon = { Icon(Icons.Outlined.PictureAsPdf, null) },
+                                        onClick = { importMenu = false; pendingImportLabel = "PDF"; importPicker.launch(arrayOf("application/pdf")) })
+                                }
+                            }
                             Box {
                                 IconButton(onClick = { mainMenu = true }, enabled = !vm.busy) { Icon(Icons.Outlined.MoreVert, "更多") }
                                 DropdownMenu(mainMenu, { mainMenu = false }, shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp), containerColor = MaterialTheme.colorScheme.surface.copy(alpha = .97f), tonalElevation = 0.dp, shadowElevation = 8.dp) {
@@ -167,7 +192,7 @@ fun RecallApp(vm: AppModel) {
                                 }, onRename = { rename = it }, onMove = { move = it }, onDelete = { delete = it },
                                 onFolder = { editFolder = it; folderForm = true }, onFolderDelete = { folderDelete = it }, onDrop = vm::move,
                                 folderContent = page == AppPage.FOLDER)
-                            AppPage.ARTICLE -> vm.selected?.let { ArticleScreen(vm, visible, ::finishEdit) }
+                            AppPage.ARTICLE -> vm.selected?.let { ArticleScreen(vm, visible, titleFocusRequest) }
                         }
                     }
                 }
@@ -190,6 +215,9 @@ fun RecallApp(vm: AppModel) {
             text = { Text("保存后用于背诵；放弃修改会恢复原来的正文和挖空。") },
             confirmButton = { TextButton(onClick = { leaveDialog = false; finishEdit() }) { Text("保存") } },
             dismissButton = { Row { TextButton(onClick = { leaveDialog = false; vm.discard() }) { Text("放弃修改") }; TextButton(onClick = { leaveDialog = false }) { Text("继续编辑") } } })
+        if (titleRequired) AlertDialog(onDismissRequest = { titleRequired = false }, title = { Text("文章标题还未命名") },
+            text = { Text("请先填写文章标题，再保存这篇文章。") },
+            confirmButton = { TextButton(onClick = { titleRequired = false; titleFocusRequest++ }) { Text("去命名") } })
         if (impactDialog) AlertDialog(onDismissRequest = { impactDialog = false }, title = { Text("检查受影响的挖空") },
             text = { Text("本次正文修改将取消 ${vm.affectedCount} 处挖空，其他挖空会保留。保存后可以重新标记这些内容。") },
             confirmButton = { TextButton(onClick = { impactDialog = false; vm.save() }) { Text("确认保存") } },
