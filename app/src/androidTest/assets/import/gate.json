@@ -1,0 +1,72 @@
+[
+  {
+    "name": "I01_清晰中文.png",
+    "family": "png",
+    "asset": "import/gate/00.png",
+    "error": null,
+    "sha256": "92d3242fe5581d3032685f5065056f647c73953b3f7a8fe516a6e0ac4a6b1624"
+  },
+  {
+    "name": "I02_清晰英文.png",
+    "family": "png",
+    "asset": "import/gate/01.png",
+    "error": null,
+    "sha256": "3afd1b1509c9e1419f068a984f47fd8178a53349220dc397d01270600cefd8b4"
+  },
+  {
+    "name": "I06_旋转90.png",
+    "family": "png",
+    "asset": "import/gate/02.png",
+    "error": null,
+    "sha256": "92d3242fe5581d3032685f5065056f647c73953b3f7a8fe516a6e0ac4a6b1624"
+  },
+  {
+    "name": "I09_倾斜3.png",
+    "family": "png",
+    "asset": "import/gate/03.png",
+    "error": null,
+    "sha256": "92d3242fe5581d3032685f5065056f647c73953b3f7a8fe516a6e0ac4a6b1624"
+  },
+  {
+    "name": "I10_倾斜-7.png",
+    "family": "png",
+    "asset": "import/gate/04.png",
+    "error": null,
+    "sha256": "92d3242fe5581d3032685f5065056f647c73953b3f7a8fe516a6e0ac4a6b1624"
+  },
+  {
+    "name": "I15_透明背景.png",
+    "family": "png",
+    "asset": "import/gate/05.png",
+    "error": null,
+    "sha256": "92d3242fe5581d3032685f5065056f647c73953b3f7a8fe516a6e0ac4a6b1624"
+  },
+  {
+    "name": "I23_全白.png",
+    "family": "png",
+    "asset": "import/gate/06.png",
+    "error": "EMPTY_DOCUMENT",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "S01_单页中文扫描.pdf",
+    "family": "pdf",
+    "asset": "import/gate/07.pdf",
+    "error": null,
+    "sha256": "92d3242fe5581d3032685f5065056f647c73953b3f7a8fe516a6e0ac4a6b1624"
+  },
+  {
+    "name": "S07_文字扫描文字.pdf",
+    "family": "pdf",
+    "asset": "import/gate/08.pdf",
+    "error": null,
+    "sha256": "f47686683b903b14682a443da06c7625196f8c41e1470a7fea61df8047a56491"
+  },
+  {
+    "name": "S18_旧隐藏文字层.pdf",
+    "family": "pdf",
+    "asset": "import/gate/09.pdf",
+    "error": null,
+    "sha256": "92d3242fe5581d3032685f5065056f647c73953b3f7a8fe516a6e0ac4a6b1624"
+  }
+]

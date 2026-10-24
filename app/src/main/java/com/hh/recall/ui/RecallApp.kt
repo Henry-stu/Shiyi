@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -36,6 +37,7 @@ import com.hh.recall.BuildConfig
 import com.hh.recall.ScreenMode
 import com.hh.recall.core.Article
 import com.hh.recall.core.Folder
+import com.hh.recall.importing.ImportType
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -63,7 +65,7 @@ fun RecallApp(vm: AppModel) {
         var settings by remember { mutableStateOf(false) }
         var mainMenu by remember { mutableStateOf(false) }
         var importMenu by remember { mutableStateOf(false) }
-        var pendingImportLabel by remember { mutableStateOf("") }
+        var pendingImportType by rememberSaveable { mutableStateOf(ImportType.MARKDOWN) }
         var titleRequired by remember { mutableStateOf(false) }
         var titleFocusRequest by remember { mutableIntStateOf(0) }
         var leaveDialog by remember { mutableStateOf(false) }
@@ -84,7 +86,7 @@ fun RecallApp(vm: AppModel) {
                 input.use { vm.restore(it) } }
         }
         val importPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            if (uri != null) vm.notify("已选择$pendingImportLabel 文件，解析导入将在后续版本开放")
+            if (uri != null) vm.importer.start(uri, pendingImportType, vm.folderFilter?.takeUnless { it == "unfiled" })
         }
         fun finishEdit() {
             vm.finishComposition()
@@ -146,11 +148,13 @@ fun RecallApp(vm: AppModel) {
                                 DropdownMenu(importMenu, { importMenu = false }, shape = androidx.compose.foundation.shape.RoundedCornerShape(18.dp)) {
                                     DropdownMenuItem(text = { Text("Markdown 文件") }, leadingIcon = { Icon(Icons.Outlined.Description, null) },
                                         onClick = {
-                                            importMenu = false; pendingImportLabel = "Markdown"
-                                            importPicker.launch(arrayOf("text/markdown", "text/plain", "application/octet-stream"))
+                                            importMenu = false; pendingImportType = ImportType.MARKDOWN
+                                            importPicker.launch(ImportType.MARKDOWN.mime)
                                         })
                                     DropdownMenuItem(text = { Text("PDF 文件") }, leadingIcon = { Icon(Icons.Outlined.PictureAsPdf, null) },
-                                        onClick = { importMenu = false; pendingImportLabel = "PDF"; importPicker.launch(arrayOf("application/pdf")) })
+                                        onClick = { importMenu = false; pendingImportType = ImportType.PDF; importPicker.launch(ImportType.PDF.mime) })
+                                    DropdownMenuItem(text = { Text("PNG图片") }, leadingIcon = { Icon(Icons.Outlined.Image, null) },
+                                        onClick = { importMenu = false; pendingImportType = ImportType.PNG; importPicker.launch(ImportType.PNG.mime) })
                                 }
                             }
                             Box {
@@ -200,6 +204,8 @@ fun RecallApp(vm: AppModel) {
                     Modifier.align(Alignment.BottomCenter).padding(horizontal = 20.dp).padding(bottom = 16.dp))
             }
         }
+
+        if (vm.importer.visible) ImportScreen(vm.importer, vm.busy, vm::confirmImport)
 
         if (settings) AlertDialog(onDismissRequest = { settings = false }, title = { Text("阅读设置") }, text = {
             Column {

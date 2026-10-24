@@ -3,22 +3,22 @@ from pathlib import Path
 import hashlib
 import shutil
 import zipfile
+import re
 
 root = Path(__file__).resolve().parents[1]
 dist = root / "dist"
 dist.mkdir(exist_ok=True)
-apk = dist / "拾忆-v1.2.1.apk"
+version = re.search(r'versionName\s*=\s*"([^"]+)"', (root / "app/build.gradle.kts").read_text("utf-8")).group(1)
+apk = dist / f"拾忆-v{version}.apk"
 shutil.copy2(root / "app/build/outputs/apk/release/app-release.apk", apk)
-source = dist / "Recall-source-v1.2.1.zip"
-excluded = {"signing", "dist", "build", ".gradle", ".kotlin", ".idea", ".git", "__pycache__"}
+source = dist / f"Recall-source-v{version}.zip"
+excluded = {"signing", "dist", "build", ".gradle", ".kotlin", ".idea", ".git", "__pycache__", "qa"}
 with zipfile.ZipFile(source, "w", zipfile.ZIP_DEFLATED) as archive:
     for path in sorted(root.rglob("*")):
         relative = path.relative_to(root)
         if not path.is_file() or any(part in excluded for part in relative.parts):
             continue
         if relative.name == "local.properties" or path.suffix in {".jks", ".keystore", ".pyc"}:
-            continue
-        if relative.parts[0] == "qa" and relative.name != "device-tests.txt":
             continue
         archive.write(path, "Recall/" + relative.as_posix())
 with zipfile.ZipFile(source) as archive:

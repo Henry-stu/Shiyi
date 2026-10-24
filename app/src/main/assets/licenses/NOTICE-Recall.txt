@@ -1,0 +1,18 @@
+Recall offline document import
+
+This app includes ONNX Runtime Android 1.23.2 (Microsoft, MIT),
+OpenCV Android 4.12.0 (OpenCV contributors, Apache-2.0),
+PDFBox Android 2.0.27.0 (Tom Roush and Apache PDFBox contributors),
+and Bouncy Castle (The Legion of the Bouncy Castle).
+See the accompanying LICENSE and NOTICE files for their terms and attributions.
+
+The DB detection and CTC decoding rules were adapted from RapidOCR 3.9.2,
+Copyright (c) 2021 RapidOCR Authors. All rights reserved. Apache-2.0.
+The Java implementation in Recall modifies preprocessing, crop execution,
+orientation selection, deskew, long-image merging, cancellation and page routing.
+
+PP-OCRv6 small detection and recognition ONNX weights are unmodified copies
+from RapidAI/RapidOCR ModelScope release v3.9.2, whose model card declares
+Apache License 2.0. PaddlePaddle's corresponding upstream model cards also
+declare Apache-2.0. See THIRD_PARTY.md in the source package for exact URLs
+and SHA-256 values, and RapidOCR-model-card-v3.9.2.txt in this directory.

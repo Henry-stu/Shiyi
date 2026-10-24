@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.platform.LocalDensity
@@ -42,13 +43,15 @@ fun CategoryScreen(vm: AppModel, articles: List<Article>, folders: List<Folder>,
     val entries = listOf(Folder(id = "unfiled", name = "未分类")) + sortedFolders(folders, vm.folderSort)
     val visible = entries.filter { it.name.contains(vm.categoryQuery, ignoreCase = true) }
     Box(Modifier.fillMaxSize().testTag("categoryPage"), contentAlignment = Alignment.TopCenter) {
-        Column(Modifier.widthIn(max = 1120.dp).fillMaxSize().padding(horizontal = 20.dp)) {
+        BoxWithConstraints(Modifier.widthIn(max = 1120.dp).fillMaxSize().padding(horizontal = 20.dp)) {
+            val columns = when { maxWidth >= 800.dp -> 4; maxWidth >= 560.dp -> 3; else -> 2 }
+            Column(Modifier.fillMaxSize()) {
             val compact = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() } < 480.dp
             if (vm.categorySearching && !compact) {
                 CategorySearchField(vm, Modifier.fillMaxWidth().padding(top = 12.dp))
             }
             Spacer(Modifier.height(if (compact) 8.dp else 20.dp))
-            LazyVerticalGrid(columns = if (vm.folderList) GridCells.Fixed(1) else GridCells.Adaptive(240.dp), state = grid,
+            LazyVerticalGrid(columns = GridCells.Fixed(if (vm.folderList) 1 else columns), state = grid,
                 modifier = Modifier.weight(1f).testTag("categoryGrid"), contentPadding = PaddingValues(bottom = 112.dp),
                 horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 items(visible, key = { it.id }) { folder ->
@@ -73,18 +76,18 @@ fun CategoryScreen(vm: AppModel, articles: List<Article>, folders: List<Folder>,
                                 Spacer(Modifier.width(10.dp))
                                 FolderCount(folder.id, count)
                                 RenameFolderButton(folder, accent, !vm.busy, onRename)
-                            } else Column(Modifier.fillMaxWidth().heightIn(min = 156.dp).padding(16.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                                    FolderArtwork(accent, dark, Modifier.size(56.dp))
-                                    Spacer(Modifier.weight(1f))
-                                    RenameFolderButton(folder, accent, !vm.busy, onRename)
+                            } else Box(Modifier.fillMaxWidth().height(188.dp)) {
+                                Column(Modifier.fillMaxSize().padding(start = 12.dp, end = 12.dp, top = 28.dp, bottom = 12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally) {
+                                    FolderArtwork(accent, dark, Modifier.size(88.dp).testTag("folderArtwork-${folder.id}"))
+                                    Spacer(Modifier.height(8.dp))
+                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                        FolderName(folder, Modifier.weight(1f), centered = true)
+                                        Spacer(Modifier.width(6.dp))
+                                        FolderCount(folder.id, count)
+                                    }
                                 }
-                                Spacer(Modifier.height(12.dp))
-                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                    FolderName(folder, Modifier.weight(1f))
-                                    Spacer(Modifier.width(12.dp))
-                                    FolderCount(folder.id, count)
-                                }
+                                Box(Modifier.align(Alignment.TopEnd)) { RenameFolderButton(folder, accent, !vm.busy, onRename) }
                             }
                         }
                         DropdownMenu(menu, { menu = false }, shape = RoundedCornerShape(18.dp)) {
@@ -96,6 +99,7 @@ fun CategoryScreen(vm: AppModel, articles: List<Article>, folders: List<Folder>,
                 if (visible.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) {
                     Text("没有匹配的文件夹", Modifier.fillMaxWidth().padding(vertical = 48.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+            }
             }
         }
     }
@@ -110,16 +114,17 @@ fun CategorySearchField(vm: AppModel, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun FolderName(folder: Folder, modifier: Modifier = Modifier) {
+private fun FolderName(folder: Folder, modifier: Modifier = Modifier, centered: Boolean = false) {
     Text(folder.name, modifier.testTag("folderName-${folder.id}"), maxLines = 2, minLines = 2,
-        overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 23.sp)
+        overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 23.sp,
+        textAlign = if (centered) TextAlign.Center else TextAlign.Start)
 }
 
 @Composable
 private fun FolderCount(id: String, count: Int) {
     Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.surfaceContainer,
         modifier = Modifier.testTag("folderCount-$id")) {
-        Text("$count 篇", Modifier.padding(horizontal = 10.dp, vertical = 6.dp), maxLines = 1,
+        Text("$count 篇", Modifier.padding(horizontal = 6.dp, vertical = 6.dp), maxLines = 1,
             fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

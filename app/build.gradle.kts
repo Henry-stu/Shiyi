@@ -16,9 +16,11 @@ android {
         applicationId = "com.hh.recall"
         minSdk = 26
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.2.1"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        versionCode = 9
+        versionName = "1.3.3"
+        ndk { abiFilters += listOf("arm64-v8a") }
+        testInstrumentationRunner = if (providers.gradleProperty("releaseAudit").orNull == "true")
+            "com.hh.recall.ReleaseAuditInstrumentation" else "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions { annotationProcessorOptions { arguments["room.schemaLocation"] = "$projectDir/schemas" } }
     }
     compileOptions {
@@ -40,7 +42,7 @@ android {
             signingConfig = signingConfigs.getByName("personal")
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
     testOptions { unitTests.isReturnDefaultValues = true }
@@ -60,6 +62,9 @@ dependencies {
     implementation("androidx.room:room-ktx:2.8.4")
     annotationProcessor("androidx.room:room-compiler:2.8.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.23.2")
+    implementation("org.opencv:opencv:4.12.0")
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     testImplementation("org.json:json:20250517")

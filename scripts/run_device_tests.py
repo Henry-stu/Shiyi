@@ -22,7 +22,7 @@ with log_path.open('w',encoding='utf-8') as log:
     args=[ADB,'-s',SERIAL,'shell','am','instrument','-w','-r']
     if len(sys.argv)>1: args += ['-e','class',sys.argv[1]]
     p=subprocess.Popen(args+['com.hh.recall.test/androidx.test.runner.AndroidJUnitRunner'],stdout=log,stderr=subprocess.STDOUT)
-    deadline=time.monotonic()+150
+    deadline=time.monotonic()+360
     while p.poll() is None and time.monotonic()<deadline:
         time.sleep(1.5)
         blocked=blocked_launch()

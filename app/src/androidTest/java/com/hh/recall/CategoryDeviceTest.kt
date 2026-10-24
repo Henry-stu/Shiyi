@@ -206,4 +206,23 @@ class CategoryDeviceTest {
         }.thenBy { compose.onNodeWithTag("category-$it").fetchSemanticsNode().boundsInRoot.left })
         assertEquals(expected, actual)
     }
+
+    @Test fun responsiveGridUsesTwoThreeOrFourColumnsAndLargerCenteredArtwork() {
+        mount(many = true); compose.onNodeWithTag("navCategories").performClick()
+        val grid = compose.onNodeWithTag("categoryGrid").getUnclippedBoundsInRoot()
+        val width = (grid.right - grid.left).value
+        val expected = when { width >= 800f -> 4; width >= 560f -> 3; else -> 2 }
+        val ids = listOf("unfiled") + sortedFolders(vm.repository.library.value.folders, vm.folderSort).map { it.id }
+        val row = ids.take(expected).map { compose.onNodeWithTag("category-$it").fetchSemanticsNode().boundsInRoot }
+        row.forEach { assertEquals(row.first().top, it.top, 1f); assertEquals(row.first().width, it.width, 1f) }
+        assertTrue(compose.onNodeWithTag("category-${ids[expected]}").fetchSemanticsNode().boundsInRoot.top > row.first().top)
+        val artwork = compose.onNodeWithTag("folderArtwork-unfiled", useUnmergedTree = true).getUnclippedBoundsInRoot()
+        assertEquals(88f, (artwork.right - artwork.left).value, 1f)
+        val card = compose.onNodeWithTag("category-unfiled").getUnclippedBoundsInRoot()
+        assertEquals(((card.left + card.right) / 2).value, ((artwork.left + artwork.right) / 2).value, 1f)
+        val shot = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        java.io.File(app.cacheDir, "category-layout-${app.resources.configuration.orientation}.png").outputStream().use {
+            shot.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+        }; shot.recycle()
+    }
 }

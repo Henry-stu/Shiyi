@@ -71,11 +71,12 @@ class NavigationDeviceTest {
         }
     }
 
-    @Test fun homeImportMenuOffersMarkdownAndPdfTypes() {
+    @Test fun homeImportMenuOffersMarkdownPdfAndPngImageTypes() {
         mount()
         compose.onNodeWithTag("importButton").performClick()
         compose.onNodeWithText("Markdown 文件").assertExists()
         compose.onNodeWithText("PDF 文件").assertExists()
+        compose.onNodeWithText("PNG图片").assertExists()
     }
 
     @Test fun toolbarExpansionDoesNotMoveOrReflowNativeText() {

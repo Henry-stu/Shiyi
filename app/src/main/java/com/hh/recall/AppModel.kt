@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.hh.recall.core.*
 import com.hh.recall.data.*
+import com.hh.recall.importing.DocumentImport
 import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -16,6 +17,7 @@ enum class AppPage { HOME, CATEGORIES, FOLDER, ARTICLE }
 
 class AppModel @JvmOverloads constructor(application: Application, databaseName: String = "recall.db") : AndroidViewModel(application) {
     val repository = Repository(application, databaseName)
+    val importer = DocumentImport(application, viewModelScope)
     val reveal = RevealController(viewModelScope)
     private val preferences = application.getSharedPreferences("settings", 0)
     var loaded by mutableStateOf(false); private set
@@ -126,6 +128,32 @@ class AppModel @JvmOverloads constructor(application: Application, databaseName:
         readOffset = 0; mode = ScreenMode.BODY; pendingComposition = null
         page = AppPage.ARTICLE
         persistDraft()
+    }
+
+    fun confirmImport() {
+        if (busy || importer.running || importer.preview == null || page != AppPage.HOME || mode != ScreenMode.READ) return
+        if (importer.title.isBlank()) { notify("请填写文章标题"); return }
+        if (importer.body.isBlank()) { notify("正文不能为空"); return }
+        if (importer.preview?.needsReview == true && !importer.checked) { notify("请先核对识别文字"); return }
+        val destination = importer.folderId?.takeIf { id -> repository.library.value.folders.any { it.id == id } }
+        val article = Article(title = importer.title.trim(), body = importer.body, folderId = destination)
+        busy = true
+        execute {
+            repository.save(article)
+            draftJob?.cancel(); session++; reveal.reset()
+            articleOrigin = AppPage.HOME; page = AppPage.ARTICLE
+            selected = article; savedArticle = article; title = article.title
+            snapshot = TextSnapshot(article.body, emptyList()); readOffset = 0
+            query = ""; folderFilter = destination; busy = false
+            importer.dismiss()
+            edit(ScreenMode.MASK)
+            notify("文章已导入，划过文字开始挖空")
+        }
+    }
+
+    override fun onCleared() {
+        importer.close()
+        super.onCleared()
     }
 
     fun edit(next: ScreenMode) {
