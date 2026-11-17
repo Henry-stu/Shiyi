@@ -44,6 +44,9 @@ public final class ReleaseAuditInstrumentation extends Instrumentation {
                 if(!asset.equals(cache))throw new IllegalStateException("Model mismatch");
                 models.put(name,new JSONObject().put("asset_sha256",asset).put("cache_sha256",cache));
             }
+            File settings=new File(app.getApplicationInfo().dataDir,"shared_prefs/settings.xml");
+            if(settings.exists())try(InputStream in=new FileInputStream(settings)){result.put("settings_sha256",hash(in));}
+            else result.put("settings_sha256",JSONObject.NULL);
             result.put("tables",tables).put("models",models).put("debuggable",false)
                 .put("version",app.getPackageManager().getPackageInfo(app.getPackageName(),0).versionName);
             status.putString("stream","RECALL_RELEASE_AUDIT "+result+"\n");finish(Activity.RESULT_OK,status);

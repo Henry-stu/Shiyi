@@ -113,7 +113,7 @@ class DocumentImport(private val app: Context, private val scope: CoroutineScope
                         else if (failure != null) { errorCode = failure; status = errorMessage(failure!!) }
                         else {
                             title = suggestedTitle(name); body = text; preview = output
-                            status = "请检查标题和正文，正文可在下方修改。"
+                            status = "检查并修改标题与正文"
                             // Published bitmaps remain GC-owned while Compose may still draw the old frame.
                             result = null
                         }

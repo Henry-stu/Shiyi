@@ -40,6 +40,9 @@ class NavigationDeviceTest {
         mount()
         compose.onNodeWithTag("library").assertExists()
         compose.onNodeWithTag("importButton").assertExists()
+        compose.onNodeWithTag("themeToggle").assertExists()
+        assertTrue(compose.onNodeWithTag("themeToggle").fetchSemanticsNode().boundsInRoot.right <=
+            compose.onNodeWithTag("importButton").fetchSemanticsNode().boundsInRoot.left)
         compose.onNodeWithTag("newArticle").assertExists()
         compose.onNodeWithContentDescription("新建文章").assertDoesNotExist()
         compose.onNodeWithTag("article-${article.id}").performClick()
@@ -77,6 +80,24 @@ class NavigationDeviceTest {
         compose.onNodeWithText("Markdown 文件").assertExists()
         compose.onNodeWithText("PDF 文件").assertExists()
         compose.onNodeWithText("PNG图片").assertExists()
+    }
+
+    @Test fun homeThemeSwitchPersistsAndSettingsNoLongerDuplicatesIt() {
+        mount()
+        val original = vm.dark
+        try {
+            compose.onNodeWithTag("themeToggle").performClick()
+            compose.runOnIdle {
+                assertEquals(!original, vm.dark)
+                assertEquals(!original, ApplicationProvider.getApplicationContext<Application>()
+                    .getSharedPreferences("settings", 0).getBoolean("dark", original))
+            }
+            compose.onNodeWithContentDescription("更多").performClick()
+            compose.onNodeWithText("显示设置").performClick()
+            compose.onNodeWithText("阅读设置").assertExists()
+            // The home toolbar remains in the background semantics tree; only that switch exists.
+            compose.onAllNodes(isToggleable()).assertCountEquals(1)
+        } finally { compose.runOnUiThread { vm.theme(original) } }
     }
 
     @Test fun toolbarExpansionDoesNotMoveOrReflowNativeText() {

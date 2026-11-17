@@ -1,4 +1,16 @@
-# 导入模块的第三方组件
+# 第三方组件与样式来源
+
+## 1.3.4 原生样式适配
+
+以下用户指定的 Uiverse 样式已改写为 Jetpack Compose 原生绘制与交互；按手机／平板窗口和系统字号自适应，并使用应用的明暗主题配色。无网页嵌入或运行时网络依赖。
+
+- JkHuger：日月滑动开关，https://uiverse.io/JkHuger/smooth-frog-53
+- satyamchaudharydev：圆角搜索框与聚焦底线，https://uiverse.io/satyamchaudharydev/plastic-bobcat-37
+- alexruix：方块跳动与阴影动效，https://uiverse.io/alexruix/white-cat-50
+
+对应原始代码核对自 https://github.com/uiverse-io/galaxy ，仓库声明为 MIT License（Copyright (c) 2023 Uiverse.io）；完整许可已随 APK／源码置于 `app/src/main/assets/licenses/Uiverse-MIT.txt`。
+
+## 导入模块
 
 本次整合保留独立实验验证过的版本。运行时离线，不包含桌面 Python、MarkItDown 或 PDF Skill 的运行时与代码。
 

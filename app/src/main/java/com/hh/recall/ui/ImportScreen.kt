@@ -54,7 +54,7 @@ fun ImportScreen(session: DocumentImport, saving: Boolean, onImport: () -> Unit)
         Box(Modifier.fillMaxSize()) {
             Scaffold(modifier = Modifier.fillMaxSize().imePadding().testTag("importScreen"),
                 topBar = {
-                    TopAppBar(title = { Text(if (session.running) "正在读取" else "导入预览", fontWeight = FontWeight.SemiBold) },
+                    TopAppBar(title = { Text(if (session.running) session.type.label else "导入预览", fontWeight = FontWeight.SemiBold) },
                         navigationIcon = { IconButton(onClick = ::leave, enabled = !saving && !session.cancelling, modifier = Modifier.testTag("importBack")) {
                             Icon(Icons.AutoMirrored.Outlined.ArrowBack, "返回")
                         } })
@@ -75,11 +75,11 @@ fun ImportScreen(session: DocumentImport, saving: Boolean, onImport: () -> Unit)
                     }
                 }
             ) { padding ->
-                LazyColumn(state = list, modifier = Modifier.padding(padding).fillMaxSize().testTag("importContent"),
+                if (session.running) ImportLoadingPane(session.status, session.cancelling, session::dismiss, Modifier.padding(padding))
+                else LazyColumn(state = list, modifier = Modifier.padding(padding).fillMaxSize().testTag("importContent"),
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     item {
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text(session.type.label, style = MaterialTheme.typography.titleMedium)
                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Text(session.status, modifier = Modifier.weight(1f).testTag("importHint"),
@@ -95,12 +95,8 @@ fun ImportScreen(session: DocumentImport, saving: Boolean, onImport: () -> Unit)
                             }
                             if (viewerError) Text("没有可打开此文件的应用。", fontSize = 13.sp)
                             if (session.preview?.needsReview == true)
-                                Text("图片识别可能出现错字、漏字或顺序差异，请校对后导入。", fontSize = 14.sp)
-                            if (session.running) {
-                                LinearProgressIndicator(Modifier.fillMaxWidth())
-                                Text("识别在本机完成，长文件需要一些时间。", fontSize = 14.sp)
-                                OutlinedButton(onClick = session::dismiss, enabled = !session.cancelling, modifier = Modifier.testTag("cancelImport")) { Text(if (session.cancelling) "正在取消…" else "取消读取") }
-                            } else if (session.errorCode != null) {
+                                Text("识别结果可能有误，请对照原文件校对。", fontSize = 14.sp)
+                            if (session.errorCode != null) {
                                 Text("未创建文章，你可以返回后重新选择文件。", fontSize = 14.sp)
                                 if (session.errorCode == "ENCODING_REQUIRED") OutlinedButton(onClick = session::retryLegacy) { Text("按 GB18030 重试") }
                             }

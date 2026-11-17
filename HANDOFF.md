@@ -3,14 +3,17 @@
 ## 当前状态
 
 - 项目目录：`D:\codex-workspace\Recall`
-- 当前版本：拾忆 1.3.3，`versionCode 9`，应用标识 `com.hh.recall`。
+- 当前版本：拾忆 1.3.4，`versionCode 10`，应用标识 `com.hh.recall`。
+- 1.3.4 样式：深浅模式改为首页「＋」左侧日月滑动开关，设置移除重复开关；搜索提示「搜索学习资料」，聚焦展开底线；读取中显示方块弹跳／旋转及阴影，精简重复文案。按手机／平板窗口、横竖屏及字号适配，使用 Compose 原生实现，不照搬网页固定宽度。参考及许可证见 `THIRD_PARTY.md`。
+- 1.3.4 构建：JVM 36 项、Debug／AndroidTest／Release 与 Lint 通过（0 错误、12 条既有警告）。样式 7 项在手机竖屏、平板横竖屏均通过，另分批完成导航 7 项与导入 5 项；大字号、低高度、主题持久化与取消后动画停止均有覆盖。完整记录见 `VALIDATION.md`。
+- 1.3.4 已同签名覆盖安装至手机／平板，正式版实际导入与取消回归通过。更新前后文章／文件夹／草稿逐表摘要、OCR 模型及设置文件 SHA-256 完全一致；安装 APK 哈希等于最终 Release，测试包已移除，原系统旋转设置已恢复。私有记录仅在本机忽略目录 `qa/style-v134/`。
 - 本轮图标：按用户截图矢量重描深绿底双叶图形，采用 Adaptive Icon，补充 Android 13 单色主题图标。设计源图及 PNG 在 `design/app-icon/`，生成脚本 `scripts/generate_app_icon.py`。
 - 1.3.3 已同签名覆盖安装至手机／平板，桌面图标实际显示通过；干净 Debug／Release 构建和 Lint 通过（0 错误、12 条既有警告）。两台设备更新前后资料及模型摘要一致，审计测试包已移除。小米桌面缓存旧图时仅重启桌面进程，无需清除桌面数据。
 - 1.3.2 调整：导入预览合并重复提示，原文件入口移至顶部提示行右侧；标题／正文相邻并保持 24dp 间隔，原字号与颜色不变。
-- 1.3.2 追加移除「确认前不会写入资料库」，正文末尾只留字符数。JVM 36 项、两台设备各 5 项导入专项及三类型实际布局核对通过，平板检查横竖屏；Release 已安装，原资料摘要一致。当前验收记录位于 `VALIDATION.md` 最前。
+- 1.3.2 追加移除「确认前不会写入资料库」，正文末尾只留字符数。JVM 36 项、两台设备各 5 项导入专项及三类型实际布局核对通过，平板检查横竖屏；当时 Release 已安装，原资料摘要一致。各轮记录见 `VALIDATION.md`。
 - 最新调整：PNG 原图和可编辑正文同页展示，宽屏左右对照；导入无切换按钮，PDF 无逐页图片。分类手机 2 列、平板竖屏 3 列／横屏 4 列，文件夹图形 88dp 居中。
 - 已同签名覆盖安装到小米平板 7 与 Xiaomi 14 Pro。数据库仍为 schema 2；小米平板原有 2 篇文章、2 个文件夹，设备回归前后资料快照一致。
-- 工作区已初始化 Git；当前工程改进以提交 `c4dfe32` 为源代码基线，后续提交见 `git log`。更早的 1.2.0→1.2.1 历史无法恢复。
+- 工作区已初始化 Git；`c4dfe32` 为最初工程基线，1.3.3 成果已整理为本地提交 `e485b99`。1.3.4 成果已整理为本地 Git 提交；最新提交及工作区状态以 `git log`、`git status` 为准。GitHub 远程配置以 `git remote -v` 为准。更早的 1.2.0→1.2.1 历史无法恢复。
 
 ## 重要文件
 
@@ -18,10 +21,12 @@
 - `VALIDATION.md`：各版本设备验收记录，最新版本在最前面。
 - `app/src/main/java/com/hh/recall/ui/CategoryScreen.kt`：分类页及文件夹卡片。
 - `app/src/main/java/com/hh/recall/ui/RecallApp.kt`：页面导航、重命名弹框、键盘适配。
+- `app/src/main/java/com/hh/recall/ui/StyleComponents.kt`：原生日月开关、自适应搜索框及导入动效。
+- `app/src/androidTest/java/com/hh/recall/StyleDeviceTest.kt`：样式交互、大小字号适配和动画帧测试。
 - `app/src/main/java/com/hh/recall/AppModel.kt`：页面和资料状态、重命名行为。
 - `app/src/androidTest/java/com/hh/recall/CategoryDeviceTest.kt`：分类页、排序、重命名、卡片尺寸测试。
-- `dist/拾忆-v1.3.3.apk`：已签名安装包。
-- `dist/Recall-source-v1.3.3.zip`：源码分发包，不含签名材料和本机路径。
+- `dist/拾忆-v1.3.4.apk`：已签名安装包。
+- `dist/Recall-source-v1.3.4.zip`：源码分发包，不含签名材料和本机路径。
 
 ## 构建与验证
 

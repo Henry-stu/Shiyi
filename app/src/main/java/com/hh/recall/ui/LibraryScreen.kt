@@ -100,10 +100,7 @@ fun LibraryScreen(vm: AppModel, articles: List<Article>, folders: List<Folder>, 
         val gutter = if (maxWidth >= 720.dp) 32.dp else 20.dp
         Column(Modifier.widthIn(max = 1120.dp).fillMaxSize().padding(horizontal = gutter)) {
             Spacer(Modifier.height(18.dp))
-            OutlinedTextField(value = search, onValueChange = { if (folderContent) vm.folderQuery = it else vm.query = it }, placeholder = { Text("搜索学习材料") },
-                leadingIcon = { Icon(Icons.Outlined.Search, null) }, singleLine = true,
-                trailingIcon = { if (search.isNotEmpty()) IconButton(onClick = { if (folderContent) vm.folderQuery = "" else vm.query = "" }) { Icon(Icons.Outlined.Close, "清除搜索") } },
-                modifier = Modifier.fillMaxWidth().testTag("search"), shape = RoundedCornerShape(18.dp))
+            LibrarySearch(value = search, onValueChange = { if (folderContent) vm.folderQuery = it else vm.query = it })
             if (!folderContent) Row(Modifier.fillMaxWidth().padding(top = 12.dp).onGloballyPositioned { drag.folderBar = it.boundsInRoot() }
                 .horizontalScroll(folderScroll, enabled = !active).testTag("folderBar"), verticalAlignment = Alignment.CenterVertically) {
                 FilterChip(vm.folderFilter == null, { vm.selectHomeFolder(null) }, enabled = !active, label = { Text("全部") }, modifier = Modifier.testTag("folder-all"))

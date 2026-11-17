@@ -16,8 +16,8 @@ android {
         applicationId = "com.hh.recall"
         minSdk = 26
         targetSdk = 36
-        versionCode = 9
-        versionName = "1.3.3"
+        versionCode = 10
+        versionName = "1.3.4"
         ndk { abiFilters += listOf("arm64-v8a") }
         testInstrumentationRunner = if (providers.gradleProperty("releaseAudit").orNull == "true")
             "com.hh.recall.ReleaseAuditInstrumentation" else "androidx.test.runner.AndroidJUnitRunner"

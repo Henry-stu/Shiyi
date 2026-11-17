@@ -51,7 +51,7 @@ def run():
         tap(desc='导入文件');wait('PNG图片');shot('menu');checks.append('home_menu_png_image_with_icon')
         tap('PNG图片');wait('安全访问');tap(desc='取消');wait('把知识');checks.append('picker_cancel_no_preview')
         for label,file,kind in [('PNG图片','v130-qa.png','png'),('PDF 文件','v130-qa-scan.pdf','scan'),('PDF 文件','v130-qa-native.pdf','native'),('Markdown 文件','v130-qa.md','markdown')]:
-            picker(label);choose(file);wait('请检查标题和正文');shot('preview-'+kind);checks.append('saf_'+kind+'_preview')
+            picker(label);choose(file);wait('检查并修改标题与正文');shot('preview-'+kind);checks.append('saf_'+kind+'_preview')
             if kind=='png':
                 assert any(n.get('class')=='android.widget.EditText' and n.get('text')=='v130-qa' for n in nodes())
                 assert not any(n.get('text') in ['逐页对照','校对文字'] for n in nodes())

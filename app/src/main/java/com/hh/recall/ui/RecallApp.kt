@@ -118,7 +118,7 @@ fun RecallApp(vm: AppModel) {
                     title = {
                         if (home) Column {
                             Text("拾忆", fontWeight = FontWeight.SemiBold, fontSize = 25.sp)
-                            Text("把知识，留给自己。", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("把知识，留给自己。", fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         } else if (categoryPage && vm.categorySearching && compactHeight) CategorySearchField(vm, Modifier.fillMaxWidth())
                         else if (categoryPage) Text("分类", fontWeight = FontWeight.SemiBold, fontSize = 25.sp)
                         else if (folderPage) Text(library.folders.find { it.id == vm.currentFolder }?.name ?: "未分类", maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 23.sp)
@@ -140,6 +140,7 @@ fun RecallApp(vm: AppModel) {
                                 Text(if (vm.mode == ScreenMode.BODY) "保存" else "完成")
                             }
                         } else {
+                            if (home) ThemeToggle(vm.dark, vm::theme, enabled = !vm.busy)
                             if (home) Box {
                                 IconButton(onClick = { importMenu = true }, enabled = !vm.busy,
                                     modifier = Modifier.testTag("importButton").semantics { contentDescription = "导入文件" }) {
@@ -211,7 +212,6 @@ fun RecallApp(vm: AppModel) {
             Column {
                 Text("正文字号  ${vm.fontSize.toInt()}")
                 Slider(value = vm.fontSize, onValueChange = vm::font, valueRange = 16f..36f, steps = 9)
-                Row(verticalAlignment = Alignment.CenterVertically) { Text("深色模式", Modifier.weight(1f)); Switch(checked = vm.dark, onCheckedChange = vm::theme) }
                 Spacer(Modifier.height(16.dp)); Text("资料仅保存在本机。卸载前请导出备份；覆盖安装会保留资料。", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("拾忆 ${BuildConfig.VERSION_NAME} · 离线手动挖空", fontSize = 12.sp, modifier = Modifier.padding(top = 12.dp))
             }
