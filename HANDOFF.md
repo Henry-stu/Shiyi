@@ -2,6 +2,8 @@
 
 ## 当前状态
 
+- GitHub 公开仓库：`https://github.com/Henry-stu/Shiyi`（原名 Recall）。本机目录与应用标识不变；正式下载入口为仓库 Releases。
+
 - 项目目录：`D:\codex-workspace\Recall`
 - 当前版本：拾忆 1.3.4，`versionCode 10`，应用标识 `com.hh.recall`。
 - 1.3.4 样式：深浅模式改为首页「＋」左侧日月滑动开关，设置移除重复开关；搜索提示「搜索学习资料」，聚焦展开底线；读取中显示方块弹跳／旋转及阴影，精简重复文案。按手机／平板窗口、横竖屏及字号适配，使用 Compose 原生实现，不照搬网页固定宽度。参考及许可证见 `THIRD_PARTY.md`。

@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/images/cover.png" alt="拾忆 Recall：导入材料、手动挖空、主动回忆，适用于安卓平板和手机" width="100%">
+  <img src="docs/images/cover.png" alt="拾忆 Shiyi：导入材料、手动挖空、主动回忆，适用于安卓平板和手机" width="100%">
 </p>
 
-<h1 align="center">拾忆 · Recall</h1>
+<h1 align="center">拾忆 · Shiyi</h1>
 
 <p align="center">
   一款面向安卓平板和手机的离线背诵应用。<br>
@@ -14,6 +14,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/Henry-stu/Shiyi/releases/latest">下载安装</a> &nbsp; / &nbsp;
   <a href="#界面预览">界面预览</a> &nbsp; / &nbsp;
   <a href="#开始使用">开始使用</a> &nbsp; / &nbsp;
   <a href="docs/USAGE.md">使用指南</a> &nbsp; / &nbsp;
@@ -53,6 +54,10 @@
 <sub>以上为 v1.3.4 实际运行截图，已裁去系统状态栏；导入页使用测试样本。样本中的数字和 accuracy target 为识别测试文本，不代表产品准确率承诺。</sub>
 
 ## 开始使用
+
+前往 **[Releases 下载最新版](https://github.com/Henry-stu/Shiyi/releases/latest)**，选择 `Shiyi-v1.3.4-arm64.apk` 并在安卓设备上安装。安装包适用于 Android 8.0 及以上的 ARM64 安卓平板和手机。
+
+<sub>首次安装需允许浏览器或文件管理器安装应用；已有用户可直接覆盖更新。发布页同时提供源码和 SHA-256 校验文件。</sub>
 
 1. **准备材料**：点击「＋新建」输入标题和正文，或用右上角「＋」选择文件导入。
 2. **划出重点**：进入「标记」模式，划过需要背诵的文字，点右上角「完成」。从文字以外的空白处拖动也能滚动页面。
@@ -143,7 +148,7 @@ scripts/            # 构建辅助、设备验收与资料保留核验
 | **1.3.1** | PNG 同页对照校对、手机和平板分类网格优化 |
 | **1.3.0** | Markdown / PDF / PNG 导入及离线 OCR |
 
-本仓库提供源码；本机生成的 APK 和源码压缩包位于 `dist/`，不纳入 Git 版本管理。
+正式安装包、源码包及校验值在 [Releases](https://github.com/Henry-stu/Shiyi/releases) 提供。本机打包产物位于 `dist/`，不纳入 Git 版本管理。
 
 ## 致谢与第三方声明
 
